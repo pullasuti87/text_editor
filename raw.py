@@ -1,3 +1,4 @@
+# raw mode -> key press is immediately sent to the program with out press Enter
 import sys
 import termios
 import tty
@@ -10,7 +11,7 @@ def enable_raw_mode():
     # save original settings
     original_termios = termios.tcgetattr(fd)
 
-    # Set the terminal to raw mode
+    # terminal to raw mode (disables ICANON and ECHO)
     tty.setraw(fd)
 
     return original_termios
@@ -32,6 +33,10 @@ def main():
         while True:
             # read one character
             c = sys.stdin.read(1)
+
+            # ascii value
+            if c.isprintable():
+                print(ord(c))
 
             # quit
             if c == "q":
