@@ -44,5 +44,6 @@ coverage/
 # vim session
 .vim
 
-
+# python virtual environment
+.venv
 
