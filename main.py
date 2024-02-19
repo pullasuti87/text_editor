@@ -14,15 +14,26 @@ import tty
 # import signal
 
 
+"""  terminal """
+
+
+def die(msg):
+    sys.stderr.write("error-> " + msg + "\r\n")
+    sys.exit(1)
+
+
 def enable_raw_mode():
     # standard input
     fd = sys.stdin.fileno()
 
-    # save original settings
-    original_termios = termios.tcgetattr(fd)
+    try:
+        # save original settings
+        original_termios = termios.tcgetattr(fd)
 
-    # terminal to raw mode (disables ICANON and ECHO flags)
-    tty.setraw(fd)
+        # terminal to raw mode (disables ICANON and ECHO flags)
+        tty.setraw(fd)
+    except termios.error as e:
+        die(str(e))
 
     # seems that is not needed
     # block (ctrl-c -> SIGINT) and (ctrl-z -> SIGTSTP)
@@ -38,9 +49,14 @@ def disable_raw_mode(original_termios):
 
     # unblock (ctrl-c -> SIGINT) and (ctrl-z -> SIGTSTP)
     # signal.pthread_sigmask(signal.SIG_UNBLOCK, {signal.SIGINT, signal.SIGTSTP})
+    try:
+        # restore terminal settings
+        termios.tcsetattr(fd, termios.TCSAFLUSH, original_termios)
+    except termios.error as e:
+        die(str(e))
 
-    # restore terminal settings
-    termios.tcsetattr(fd, termios.TCSAFLUSH, original_termios)
+
+"""  init """
 
 
 def main():
@@ -54,16 +70,14 @@ def main():
             c = sys.stdin.read(1)
 
             # ascii value
-            print(ord(c), end="\r\n")
+            print(ord(c), c, end="\r\n")
 
-            # quit
-            if c == "q":
+            # quit -> ctrl-q
+            if ord(c) == 17:
                 break
     finally:
         # exit raw mode
         disable_raw_mode(original_termios)
-
-    # timeout
 
 
 if __name__ == "__main__":
