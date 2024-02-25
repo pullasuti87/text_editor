@@ -8,13 +8,14 @@
 
 
 import sys
+import os
 import termios
 import tty
 
 # import signal
 
 
-"""  terminal """
+""" terminal """
 
 
 def die(msg):
@@ -29,11 +30,11 @@ def enable_raw_mode():
     try:
         # save original settings
         original_termios = termios.tcgetattr(fd)
-
-        # terminal to raw mode (disables ICANON and ECHO flags)
-        tty.setraw(fd)
     except termios.error as e:
         die(str(e))
+
+    # terminal to raw mode (disables ICANON and ECHO flags)
+    tty.setraw(fd)
 
     # seems that is not needed
     # block (ctrl-c -> SIGINT) and (ctrl-z -> SIGTSTP)
@@ -56,28 +57,86 @@ def disable_raw_mode(original_termios):
         die(str(e))
 
 
-"""  init """
+# TODO: might need error handling
+def editor_read_key():
+    # read one character
+    c = sys.stdin.read(1)
+    # ascii value
+    print(ord(c), c, end="\r\n")
+    return c
+
+
+def get_window_size():
+    columns, rows = os.get_terminal_size(0)
+    return columns, rows
+
+
+""" append buffer """
+
+
+def abAppend():
+    pass
+
+
+""" output """
+
+
+def editor_refresh_screen():
+    # \x1b -> escape character
+    # [2J -> clear entire screen
+    sys.stdout.write("\x1b[2J")
+    # \x1b[H -> move cursor top-left corner
+    sys.stdout.write("\x1b[H")
+
+    # writes output stream
+    sys.stdout.flush()
+
+
+def editor_draw_rows():
+    colums, rows = get_window_size()
+
+    for i in range(colums):
+        if i != colums - 1:
+            sys.stdout.write("~\r\n")
+        else:
+            sys.stdout.write("~")
+
+
+""" input """
+
+
+def editor_process_keypress(raw_mode):
+    while True:
+        c = editor_read_key()
+
+        # quit -> ctrl-q
+        if ord(c) == 17:
+            break
+
+    # exit raw mode
+    disable_raw_mode(raw_mode)
+    editor_refresh_screen()
+    sys.exit(0)
+
+
+""" init """
+
+
+def init_editor():
+    editor_draw_rows()
+
+    # \x1b[H -> move cursor top-left corner
+    sys.stdout.write("\x1b[H")
+    # writes output stream
+    sys.stdout.flush()
 
 
 def main():
     # raw mode and save settings
     original_termios = enable_raw_mode()
 
-    try:
-
-        while True:
-            # read one character
-            c = sys.stdin.read(1)
-
-            # ascii value
-            print(ord(c), c, end="\r\n")
-
-            # quit -> ctrl-q
-            if ord(c) == 17:
-                break
-    finally:
-        # exit raw mode
-        disable_raw_mode(original_termios)
+    init_editor()
+    editor_process_keypress(original_termios)
 
 
 if __name__ == "__main__":
