@@ -14,6 +14,7 @@ import tty
 
 # import signal
 
+__version__ = "1.0.0"
 
 """ terminal """
 
@@ -71,11 +72,7 @@ def get_window_size():
     return columns, rows
 
 
-""" append buffer """
-
-
-def abAppend():
-    pass
+""" TODO: APPEND BUFFER(maybe) """
 
 
 """ output """
@@ -83,23 +80,34 @@ def abAppend():
 
 def editor_refresh_screen():
     # \x1b -> escape character
+    # NOTE: "\x1b\[K -> clear line from cursor right"
     # [2J -> clear entire screen
     sys.stdout.write("\x1b[2J")
     # \x1b[H -> move cursor top-left corner
     sys.stdout.write("\x1b[H")
-
     # writes output stream
     sys.stdout.flush()
 
 
 def editor_draw_rows():
-    colums, rows = get_window_size()
+    columns, rows = get_window_size()
 
-    for i in range(colums):
-        if i != colums - 1:
+    for i in range(rows):
+        sys.stdout.write("\x1b[K")
+
+        if i != rows - 1:
             sys.stdout.write("~\r\n")
+            if i == rows // 2.5:
+                welcome_msg = "SerpenScripter -- version " + __version__ + "\r\n"
+                centered_msg = center_text(welcome_msg, columns)
+                sys.stdout.write("~" + centered_msg[1:])
         else:
             sys.stdout.write("~")
+
+
+def center_text(msg, width):
+    padding = max((width - len(msg)) // 2, 0)
+    return " " * padding + msg
 
 
 """ input """
@@ -123,10 +131,16 @@ def editor_process_keypress(raw_mode):
 
 
 def init_editor():
-    editor_draw_rows()
+    # hide cursor
+    sys.stdout.write("\x1b[?25l")
 
+    editor_draw_rows()
     # \x1b[H -> move cursor top-left corner
     sys.stdout.write("\x1b[H")
+
+    # show cursor
+    sys.stdout.write("\x1b[?25h")
+
     # writes output stream
     sys.stdout.flush()
 
