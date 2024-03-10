@@ -79,7 +79,7 @@ def editor_read_key():
 
     # ascii value
     # print(ord(c), c, end="\r\n")
-    # return c
+    return c
 
 
 def get_window_size():
