@@ -18,6 +18,15 @@ VERSION = "1.0.0"
 # cursor x and y
 CX = 0
 CY = 0
+ARROW_UP = 1000
+ARROW_DOWN = 1001
+ARROW_RIGHT = 1002
+ARROW_LEFT = 1003
+DEL_KEY = 1004
+HOME_KEY = 1005
+END_KEY = 1006
+PAGE_UP = 1007
+PAGE_DOWN = 1008
 
 """ terminal """
 
@@ -63,22 +72,32 @@ def disable_raw_mode(original_termios):
 
 # TODO: might need error handling
 def editor_read_key():
+    global ARROW_UP, ARROW_DOWN, ARROW_RIGHT, ARROW_LEFT, PAGE_UP, PAGE_DOWN
     # read one character
     c = sys.stdin.read(1)
     if c == "\x1b":
         c = sys.stdin.read(2)
         match c:
             case "[A":
-                return "k"
+                return ARROW_UP
             case "[B":
-                return "j"
+                return ARROW_DOWN
             case "[C":
-                return "l"
+                return ARROW_RIGHT
             case "[D":
-                return "h"
+                return ARROW_LEFT
+            case "[5":
+                return PAGE_UP
+            case "[6":
+                return PAGE_DOWN
+            case "[H":
+                return HOME_KEY
+            case "[F":
+                return END_KEY
+            case "[3":
+                return DEL_KEY
 
     # ascii value
-    # print(ord(c), c, end="\r\n")
     return c
 
 
@@ -129,29 +148,61 @@ def center_text(msg, width):
 
 
 def editor_move_cursor(key):
-    global CX, CY
+    global CX, CY, ARROW_UP, ARROW_DOWN, ARROW_RIGHT, ARROW_LEFT
 
-    match key:
-        case "h":
-            CX -= 1
-        case "l":
-            CX += 1
-        case "k":
+    if key == ARROW_UP:
+        if CY > 0:
             CY -= 1
-        case "j":
+    elif key == ARROW_DOWN:
+        if CY < get_window_size()[1] - 1:
             CY += 1
-    if key in ["h", "l", "k", "j"]:
-        sys.stdout.write(f"\x1b[{CY+1};{CX+1}H")
-        sys.stdout.flush()
+    elif key == ARROW_RIGHT:
+        if CX < get_window_size()[0] - 1:
+            CX += 1
+    elif key == ARROW_LEFT:
+        if CX > 0:
+            CX -= 1
+
+    if key in [ARROW_UP, ARROW_DOWN, ARROW_RIGHT, ARROW_LEFT]:
+        move_cursor_to(CX, CY)
+
+
+def move_cursor_to(x, y):
+    sys.stdout.write(f"\x1b[{y+1};{x+1}H")
+    sys.stdout.flush()
+
+
+def move_multiple_lines(direction, lines):
+    for _ in range(lines):
+        editor_move_cursor(direction)
 
 
 def editor_process_keypress(raw_mode):
+    global PAGE_UP, PAGE_DOWN, HOME_KEY, END_KEY, DEL_KEY, CX, CY
     while True:
         c = editor_read_key()
         editor_move_cursor(c)
-        # quit -> ctrl-q
-        if ord(c) == 17:
-            break
+
+        if c == PAGE_UP:
+            move_multiple_lines(ARROW_UP, get_window_size()[1] - 1)
+        elif c == PAGE_DOWN:
+            move_multiple_lines(ARROW_DOWN, get_window_size()[0] - 1)
+        elif c == HOME_KEY:
+            CX = 0
+            move_cursor_to(CX, CY)
+        elif c == END_KEY:
+            CX = get_window_size()[0] - 1
+            move_cursor_to(CX, CY)
+        elif c == DEL_KEY:
+            print("delete")
+
+        if not isinstance(c, int) and len(c) == 1:
+            if ord(c) == 17:
+                break
+            else:
+                continue
+        else:
+            continue
 
     # exit raw mode
     disable_raw_mode(raw_mode)
