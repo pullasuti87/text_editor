@@ -16,7 +16,7 @@ import tty
 
 VERSION = "1.0.0"
 # cursor x and y
-CX = 0
+CX = 1
 CY = 0
 ARROW_UP = 1000
 ARROW_DOWN = 1001
@@ -132,9 +132,9 @@ def editor_draw_rows():
         if i != rows - 1:
             sys.stdout.write("~\r\n")
             if i == rows // 2.5:
-                welcome_msg = "SerpenScripter -- version " + VERSION + "\r\n"
-                centered_msg = center_text(welcome_msg, columns)
-                sys.stdout.write("~" + centered_msg[1:])
+                title = "SerpenScripter -- version " + VERSION + "\r\n"
+                centered_title = center_text(title, columns)
+                sys.stdout.write("~" + centered_title[1:])
         else:
             sys.stdout.write("~")
 
@@ -160,7 +160,7 @@ def editor_move_cursor(key):
         if CX < get_window_size()[0] - 1:
             CX += 1
     elif key == ARROW_LEFT:
-        if CX > 0:
+        if CX > 1:
             CX -= 1
 
     if key in [ARROW_UP, ARROW_DOWN, ARROW_RIGHT, ARROW_LEFT]:
@@ -188,7 +188,7 @@ def editor_process_keypress(raw_mode):
         elif c == PAGE_DOWN:
             move_multiple_lines(ARROW_DOWN, get_window_size()[0] - 1)
         elif c == HOME_KEY:
-            CX = 0
+            CX = 1
             move_cursor_to(CX, CY)
         elif c == END_KEY:
             CX = get_window_size()[0] - 1
@@ -218,8 +218,8 @@ def init_editor():
     sys.stdout.write("\x1b[?25l")
 
     editor_draw_rows()
-    # \x1b[H -> move cursor top-left corner
-    sys.stdout.write("\x1b[H")
+    # \x1b[H -> move cursor top-second-left corner
+    sys.stdout.write("\x1b[1;2H")
 
     # show cursor
     sys.stdout.write("\x1b[?25h")
