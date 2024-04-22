@@ -31,7 +31,7 @@ PAGE_DOWN = 1008
 """ terminal """
 
 
-def die(msg):
+def error_msg(msg):
     sys.stderr.write("error-> " + msg + "\r\n")
     sys.exit(1)
 
@@ -44,7 +44,7 @@ def enable_raw_mode():
         # save original settings
         original_termios = termios.tcgetattr(fd)
     except termios.error as e:
-        die(str(e))
+        error_msg(str(e))
 
     # terminal to raw mode (disables ICANON and ECHO flags)
     tty.setraw(fd)
@@ -66,12 +66,14 @@ def disable_raw_mode(original_termios):
     try:
         # restore terminal settings
         termios.tcsetattr(fd, termios.TCSAFLUSH, original_termios)
+        # reset colors
+        sys.stdout.write("\x1b[m")
     except termios.error as e:
-        die(str(e))
+        error_msg(str(e))
 
 
 # TODO: might need error handling
-def editor_read_key():
+def read_key():
     global ARROW_UP, ARROW_DOWN, ARROW_RIGHT, ARROW_LEFT, PAGE_UP, PAGE_DOWN
     # read one character
     c = sys.stdin.read(1)
@@ -112,7 +114,7 @@ def get_window_size():
 """ output """
 
 
-def editor_refresh_screen():
+def refresh_screen():
     # \x1b -> escape character
     # NOTE: "\x1b\[K -> clear line from cursor right"
     # [2J -> clear entire screen
@@ -123,20 +125,15 @@ def editor_refresh_screen():
     sys.stdout.flush()
 
 
-def editor_draw_rows():
+def draw_rows():
     columns, rows = get_window_size()
 
     for i in range(rows):
-        sys.stdout.write("\x1b[K")
-
-        if i != rows - 1:
-            sys.stdout.write("~\r\n")
-            if i == rows // 2.5:
-                title = "SerpenScripter -- version " + VERSION + "\r\n"
-                centered_title = center_text(title, columns)
-                sys.stdout.write("~" + centered_title)
-        else:
-            sys.stdout.write("~")
+        sys.stdout.write("~\r\n")
+        if i == rows // 2.5:
+            title = "SerpenScripter -- version " + VERSION + "\r\n"
+            centered_title = center_text(title, columns)
+            sys.stdout.write("~" + centered_title)
 
 
 def center_text(msg, width):
@@ -148,22 +145,38 @@ def clear_title():
     columns, rows = get_window_size()
     column = 2
     row = rows // 2.5
-    sys.stdout.write("\x1b[{};{}H".format(int(row + 1), column))
+    sys.stdout.write("\x1b[{};{}H".format(int(row), column))
     # erase from cursor to end of line
-    sys.stdout.write("\x1b[0K")
+    sys.stdout.write("\x1b[K")
+
+
+def draw_statusline():
+    columns, rows = get_window_size()
+
+    # last line
+    sys.stdout.write("\x1b[{};0H".format(rows))
+    # background color
+    sys.stdout.write("\x1b[42;1m")
+
+    """ feels little hacky """
+    sys.stdout.write("statusline" + (" " * (columns - len("statusline"))))
+
+    # reset color
+    sys.stdout.write("\x1b[m")
+    sys.stdout.flush()
 
 
 """ input """
 
 
-def editor_move_cursor(key):
+def move_cursor(key):
     global CX, CY, ARROW_UP, ARROW_DOWN, ARROW_RIGHT, ARROW_LEFT
 
     if key == ARROW_UP:
         if CY > 0:
             CY -= 1
     elif key == ARROW_DOWN:
-        if CY < get_window_size()[1] - 1:
+        if CY < get_window_size()[1] - 2:
             CY += 1
     elif key == ARROW_RIGHT:
         if CX < get_window_size()[0] - 1:
@@ -183,19 +196,19 @@ def move_cursor_to(x, y):
 
 def move_multiple_lines(direction, lines):
     for _ in range(lines):
-        editor_move_cursor(direction)
+        move_cursor(direction)
 
 
-def editor_process_keypress(raw_mode):
+def process_keypress(raw_mode):
     global PAGE_UP, PAGE_DOWN, HOME_KEY, END_KEY, DEL_KEY, CX, CY
     while True:
-        c = editor_read_key()
-        editor_move_cursor(c)
+        c = read_key()
+        move_cursor(c)
 
         if c == PAGE_UP:
             move_multiple_lines(ARROW_UP, get_window_size()[1] - 1)
         elif c == PAGE_DOWN:
-            move_multiple_lines(ARROW_DOWN, get_window_size()[0] - 1)
+            move_multiple_lines(ARROW_DOWN, get_window_size()[0] - 2)
         elif c == HOME_KEY:
             CX = 1
             move_cursor_to(CX, CY)
@@ -215,7 +228,7 @@ def editor_process_keypress(raw_mode):
 
     # exit raw mode
     disable_raw_mode(raw_mode)
-    editor_refresh_screen()
+    refresh_screen()
     sys.exit(0)
 
 
@@ -226,7 +239,8 @@ def init_editor():
     # hide cursor
     sys.stdout.write("\x1b[?25l")
 
-    editor_draw_rows()
+    draw_rows()
+    draw_statusline()
     # \x1b[H -> move cursor top-second-left corner
     sys.stdout.write("\x1b[1;2H")
 
@@ -246,7 +260,7 @@ def main():
     """ TODO: might need to change this"""
     clear_title()
 
-    editor_process_keypress(original_termios)
+    process_keypress(original_termios)
 
 
 if __name__ == "__main__":
