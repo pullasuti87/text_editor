@@ -134,7 +134,7 @@ def editor_draw_rows():
             if i == rows // 2.5:
                 title = "SerpenScripter -- version " + VERSION + "\r\n"
                 centered_title = center_text(title, columns)
-                sys.stdout.write("~" + centered_title[1:])
+                sys.stdout.write("~" + centered_title)
         else:
             sys.stdout.write("~")
 
@@ -142,6 +142,15 @@ def editor_draw_rows():
 def center_text(msg, width):
     padding = max((width - len(msg)) // 2, 0)
     return " " * padding + msg
+
+
+def clear_title():
+    columns, rows = get_window_size()
+    column = 2
+    row = rows // 2.5
+    sys.stdout.write("\x1b[{};{}H".format(int(row + 1), column))
+    # erase from cursor to end of line
+    sys.stdout.write("\x1b[0K")
 
 
 """ input """
@@ -233,6 +242,10 @@ def main():
     original_termios = enable_raw_mode()
 
     init_editor()
+
+    """ TODO: might need to change this"""
+    clear_title()
+
     editor_process_keypress(original_termios)
 
 
