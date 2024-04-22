@@ -145,7 +145,7 @@ def clear_title():
     columns, rows = get_window_size()
     column = 2
     row = rows // 2.5
-    sys.stdout.write("\x1b[{};{}H".format(int(row), column))
+    sys.stdout.write(f"\x1b[{int(row)};{column}H")
     # erase from cursor to end of line
     sys.stdout.write("\x1b[K")
 
@@ -154,7 +154,7 @@ def draw_statusline():
     columns, rows = get_window_size()
 
     # last line
-    sys.stdout.write("\x1b[{};0H".format(rows))
+    sys.stdout.write(f"\x1b[{rows};0H")
     # background color
     sys.stdout.write("\x1b[42;1m")
 
