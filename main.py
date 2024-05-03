@@ -150,7 +150,7 @@ def clear_title():
     sys.stdout.write("\x1b[K")
 
 
-def draw_statusline():
+def draw_statusline(filename=None):
     columns, rows = get_window_size()
 
     # last line
@@ -159,7 +159,10 @@ def draw_statusline():
     sys.stdout.write("\x1b[42;1m")
 
     """ feels little hacky """
-    sys.stdout.write("statusline" + (" " * (columns - len("statusline"))))
+    if filename:
+        sys.stdout.write("  " + filename + (" " * (columns - len("  " + filename))))
+    else:
+        sys.stdout.write("  [no name]" + (" " * (columns - len("  [no name]"))))
 
     # reset color
     sys.stdout.write("\x1b[m")
@@ -178,7 +181,7 @@ def move_cursor(key):
     elif key == ARROW_DOWN:
         if CY < get_window_size()[1] - 2:
             CY += 1
-    elif key == ARROW_RIGHT:
+    e + lif key == ARROW_RIGHT:
         if CX < get_window_size()[0] - 1:
             CX += 1
     elif key == ARROW_LEFT:
@@ -240,7 +243,10 @@ def init_editor():
     sys.stdout.write("\x1b[?25l")
 
     draw_rows()
-    draw_statusline()
+    if len(sys.argv) > 1:
+        draw_statusline(sys.argv[1])
+    else:
+        draw_statusline()
     # \x1b[H -> move cursor top-second-left corner
     sys.stdout.write("\x1b[1;2H")
 
