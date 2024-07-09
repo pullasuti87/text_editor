@@ -4,4 +4,4 @@ Decided to try to make relaxed and leisurely paced terminal text editor. Let's b
 
 Heavily inspired by "Kilo editor" -> https://viewsourcecode.org/snaptoken/kilo/01.setup.html
 
-->->->->->
+
