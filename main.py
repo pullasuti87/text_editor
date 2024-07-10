@@ -6,7 +6,7 @@
 # tty.setraw seems to disable lot of flags (not sure which ones),
 # but hey it works!
 
-
+import signal
 import sys
 import os
 import termios
@@ -118,9 +118,9 @@ def refresh_screen():
     # \x1b -> escape character
     # NOTE: "\x1b\[K -> clear line from cursor right"
     # [2J -> clear entire screen
-    sys.stdout.write("\x1b[2J")
+    # [3J -> clear scrollback buffer
     # \x1b[H -> move cursor top-left corner
-    sys.stdout.write("\x1b[H")
+    sys.stdout.write("\x1b[2J\x1b[3J\x1b[H")
     # writes output stream
     sys.stdout.flush()
 
@@ -128,7 +128,7 @@ def refresh_screen():
 def draw_rows():
     columns, rows = get_window_size()
 
-    for i in range(rows):
+    for i in range(rows - 2):
         sys.stdout.write("~\r\n")
         if i == rows // 2.5:
             title = "SerpenScripter -- version " + VERSION + "\r\n"
@@ -167,6 +167,13 @@ def draw_statusline(filename=None):
     # reset color
     sys.stdout.write("\x1b[m")
     sys.stdout.flush()
+
+
+def resize(signalnum, frame):
+    refresh_screen()
+    draw_rows()
+    draw_statusline()
+    move_cursor_to(CX, CY)
 
 
 """ input """
@@ -239,6 +246,9 @@ def process_keypress(raw_mode):
 
 
 def init_editor():
+    # clear screen
+    refresh_screen()
+
     # hide cursor
     sys.stdout.write("\x1b[?25l")
 
@@ -261,6 +271,9 @@ def main():
     # raw mode and save settings
     original_termios = enable_raw_mode()
 
+    # capture terminal screen size signal
+    # SIGWINCH triggered when resize
+    signal.signal(signal.SIGWINCH, resize)
     init_editor()
 
     """ TODO: change this"""
