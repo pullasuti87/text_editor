@@ -72,7 +72,7 @@ def disable_raw_mode(original_termios):
         error_msg(str(e))
 
 
-# TODO: might need error handling
+# TODO: error handling
 def read_key():
     global ARROW_UP, ARROW_DOWN, ARROW_RIGHT, ARROW_LEFT, PAGE_UP, PAGE_DOWN
     # read one character
@@ -154,7 +154,7 @@ def draw_statusline(filename=None):
     columns, rows = get_window_size()
 
     # last line
-    sys.stdout.write(f"\x1b[{rows};0H")
+    sys.stdout.write(f"\x1b[{rows-1};0H")
     # background color
     sys.stdout.write("\x1b[42;1m")
 
@@ -179,9 +179,9 @@ def move_cursor(key):
         if CY > 0:
             CY -= 1
     elif key == ARROW_DOWN:
-        if CY < get_window_size()[1] - 2:
+        if CY < get_window_size()[1] - 3:
             CY += 1
-    e + lif key == ARROW_RIGHT:
+    elif key == ARROW_RIGHT:
         if CX < get_window_size()[0] - 1:
             CX += 1
     elif key == ARROW_LEFT:
@@ -211,7 +211,7 @@ def process_keypress(raw_mode):
         if c == PAGE_UP:
             move_multiple_lines(ARROW_UP, get_window_size()[1] - 1)
         elif c == PAGE_DOWN:
-            move_multiple_lines(ARROW_DOWN, get_window_size()[0] - 2)
+            move_multiple_lines(ARROW_DOWN, get_window_size()[1] - 2)
         elif c == HOME_KEY:
             CX = 1
             move_cursor_to(CX, CY)
@@ -263,7 +263,7 @@ def main():
 
     init_editor()
 
-    """ TODO: might need to change this"""
+    """ TODO: change this"""
     clear_title()
 
     process_keypress(original_termios)
