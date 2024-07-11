@@ -27,6 +27,7 @@ HOME_KEY = 1005
 END_KEY = 1006
 PAGE_UP = 1007
 PAGE_DOWN = 1008
+ENTER_KEY = 1009
 
 """ terminal """
 
@@ -74,7 +75,7 @@ def disable_raw_mode(original_termios):
 
 # TODO: error handling
 def read_key():
-    global ARROW_UP, ARROW_DOWN, ARROW_RIGHT, ARROW_LEFT, PAGE_UP, PAGE_DOWN
+    global ARROW_UP, ARROW_DOWN, ARROW_RIGHT, ARROW_LEFT, PAGE_UP, PAGE_DOWN, ENTER_KEY
     # read one character
     c = sys.stdin.read(1)
     if c == "\x1b":
@@ -99,7 +100,13 @@ def read_key():
             case "[3":
                 return DEL_KEY
 
+    else:
+        # enter -> carriage return character
+        if c == "\r":
+            return ENTER_KEY
+
     # ascii value
+    # print(ord(c))
     return c
 
 
@@ -210,7 +217,7 @@ def move_multiple_lines(direction, lines):
 
 
 def process_keypress(raw_mode):
-    global PAGE_UP, PAGE_DOWN, HOME_KEY, END_KEY, DEL_KEY, CX, CY
+    global PAGE_UP, PAGE_DOWN, HOME_KEY, END_KEY, DEL_KEY, CX, CY, ENTER_KEY
     while True:
         c = read_key()
         move_cursor(c)
@@ -227,6 +234,8 @@ def process_keypress(raw_mode):
             move_cursor_to(CX, CY)
         elif c == DEL_KEY:
             print("delete")
+        elif c == ENTER_KEY:
+            print("enter")
 
         if not isinstance(c, int) and len(c) == 1:
             if ord(c) == 17:
