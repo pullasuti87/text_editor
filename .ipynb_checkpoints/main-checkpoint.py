@@ -12,7 +12,9 @@ import os
 import termios
 import tty
 
-VERSION = "0.2.0"
+# import signal
+
+VERSION = "1.0.0"
 # cursor x and y
 CX = 1
 CY = 0
@@ -73,6 +75,7 @@ def disable_raw_mode(original_termios):
 
 # TODO: error handling
 def read_key():
+    global ARROW_UP, ARROW_DOWN, ARROW_RIGHT, ARROW_LEFT, PAGE_UP, PAGE_DOWN, ENTER_KEY
     # read one character
     c = sys.stdin.read(1)
     if c == "\x1b":
@@ -173,7 +176,6 @@ def draw_statusline(filename=None):
     sys.stdout.flush()
 
 
-# resizing screen
 def resize(signalnum, frame):
     refresh_screen()
     draw_rows()
@@ -185,7 +187,7 @@ def resize(signalnum, frame):
 
 
 def move_cursor(key):
-    global CX, CY
+    global CX, CY, ARROW_UP, ARROW_DOWN, ARROW_RIGHT, ARROW_LEFT
 
     if key == ARROW_UP:
         if CY > 0:
@@ -215,7 +217,7 @@ def move_multiple_lines(direction, lines):
 
 
 def process_keypress(raw_mode):
-    global CX, CY
+    global PAGE_UP, PAGE_DOWN, HOME_KEY, END_KEY, DEL_KEY, CX, CY, ENTER_KEY
     while True:
         c = read_key()
         move_cursor(c)
@@ -233,8 +235,7 @@ def process_keypress(raw_mode):
         elif c == DEL_KEY:
             print("delete")
         elif c == ENTER_KEY:
-            # TODO: need scroll variable to track
-            print("broken")
+            print("enter")
 
         if not isinstance(c, int) and len(c) == 1:
             if ord(c) == 17:
