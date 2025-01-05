@@ -69,7 +69,7 @@ def disable_raw_mode(original_termios):
         # reset colors
         sys.stdout.write("\x1b[m")
     except termios.error as e:
-        error_msg(str(e))
+        error_message(str(e))
 
 
 # TODO: error handling
@@ -136,7 +136,7 @@ def draw_rows():
 
     for i in range(rows - 2):
         sys.stdout.write("~\r\n")
-        if i == rows // 2.5 and INIT == False:
+        if i == rows // 2.5 and INIT is False:
             title = "SerpenScripter -- version " + VERSION + "\r\n"
             centered_title = center_text(title, columns)
             sys.stdout.write("~" + centered_title)
@@ -181,6 +181,9 @@ def resize(signalnum, frame):
     draw_rows()
     draw_statusline()
     move_cursor_to(CX, CY)
+
+
+# TODO: cursor is not centered
 
 
 """ input """
@@ -238,7 +241,12 @@ def process_keypress(raw_mode):
             if get_window_size()[1] - 3 > CY:
                 CY += 1
                 move_cursor_to(CX, CY)
-            # TODO: need scroll variable to track
+            else:
+                sys.stdout.write("\r\n")
+                sys.stdout.write("~")
+                CY += 1
+                move_cursor_to(CX, CY)
+            # TODO: stille needs work && need scroll variable to track
             # signal.signal(signal.SIGWINCH, resize)
 
         if not isinstance(c, int) and len(c) == 1:
