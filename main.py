@@ -16,6 +16,7 @@ VERSION = "0.2.0"
 # cursor x and y
 CX = 1
 CY = 0
+
 ARROW_UP = 1000
 ARROW_DOWN = 1001
 ARROW_RIGHT = 1002
@@ -26,6 +27,7 @@ END_KEY = 1006
 PAGE_UP = 1007
 PAGE_DOWN = 1008
 ENTER_KEY = 1009
+
 INIT = False
 
 """ terminal """
@@ -174,6 +176,8 @@ def draw_statusline(filename=None):
     sys.stdout.write("\x1b[m")
     sys.stdout.flush()
 
+def update_statusline_position():
+    print("works")
 
 # resizing screen
 def resize(signalnum, frame):
@@ -181,10 +185,9 @@ def resize(signalnum, frame):
     draw_rows()
     draw_statusline()
     move_cursor_to(CX, CY)
-
+    print(os.get_terminal_size())
 
 # TODO: cursor is not centered
-
 
 """ input """
 
@@ -237,6 +240,7 @@ def process_keypress(raw_mode):
             move_cursor_to(CX, CY)
         elif c == DEL_KEY:
             print("delete")
+            # TODO: delete
         elif c == ENTER_KEY:
             if get_window_size()[1] - 3 > CY:
                 CY += 1
@@ -245,9 +249,11 @@ def process_keypress(raw_mode):
                 sys.stdout.write("\r\n")
                 sys.stdout.write("~")
                 CY += 1
+                update_statusline_position()
                 move_cursor_to(CX, CY)
-            # TODO: stille needs work && need scroll variable to track
-            # signal.signal(signal.SIGWINCH, resize)
+
+        # TODO: still needs work && need scroll variable to track
+        # signal.signal(signal.SIGWINCH, resize)
 
         if not isinstance(c, int) and len(c) == 1:
             if ord(c) == 17:
